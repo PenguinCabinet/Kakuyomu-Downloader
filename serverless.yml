@@ -1,0 +1,37 @@
+service: kakuyomu-downloader-api
+configValidationMode: error
+provider:
+  name: aws
+  runtime: python3.9  	
+  apiGateway:
+    binaryMediaTypes:
+      - '*/*'
+functions:
+  kakuyomu-downloader:
+    handler: main.Make_zip
+    timeout: 200
+    events:
+      - http:
+          path: /make
+          method: get
+          cors: true
+          response:
+            headers:
+              Content-Type: "'application/zip'"
+          integration: lambda_proxy 
+  kakuyomu-downloader-title:
+    handler: main.Get_title
+    timeout: 50
+    events:
+      - http:
+          path: /title
+          method: get
+          cors: true
+          response:
+            headers:
+              Content-Type: "'text/plain'"
+          integration: lambda_proxy 
+plugins:
+  - serverless-python-requirements
+  - serverless-offline
+  - serverless-ignore
