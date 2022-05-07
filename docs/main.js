@@ -26,8 +26,7 @@ async function downloader(url){
         })
     })
 
-}//https://oq9b5canwh.execute-api.us-east-1.amazonaws.com/dev/make?url=
-//https://kakuyomu.jp/works/16816700426335359442
+}
 
 function downloader_rapper(){
     downloader(document.getElementById("url").value);
