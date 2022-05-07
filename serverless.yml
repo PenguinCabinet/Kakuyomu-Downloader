@@ -9,7 +9,7 @@ provider:
 functions:
   kakuyomu-downloader:
     handler: main.Make_zip
-    timeout: 200
+    timeout: 1000
     events:
       - http:
           path: /make
