@@ -3,7 +3,7 @@
 
 # Dev
 Severless Frameworkを使用しています。   
-インフラはAWSを使用しています。
+インフラはAWS+Github Pageを使用しています。
 
 ## Backend
 ### Debug
