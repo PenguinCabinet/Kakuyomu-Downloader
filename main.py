@@ -1,9 +1,11 @@
+from asyncore import write
 import requests
 from bs4 import BeautifulSoup
 import io
 import zipfile
 import json
 import base64
+import boto3
 
 
 def Get_title(event, context):
@@ -22,7 +24,7 @@ def Get_title(event, context):
     title=get_title_from_data(event.get('queryStringParameters').get('url'))
     response = {
         "statusCode": 200,
-            "headers": headers_plain_text,
+        "headers": headers_plain_text,
         "body": title,
     }
 
@@ -34,7 +36,8 @@ def Make_zip(event, context):
         "Content-Type": "text/plain",
         "Access-Control-Allow-Headers" : "Content-Type",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        "X-Amz-Invocation-Type": 'Event'
     }
     if event.get('queryStringParameters') is None:
         return {
@@ -57,11 +60,89 @@ def Make_zip(event, context):
                         "body": "url is None.",
                     }
 
-    zip_data,title=get_zip_from_data(url)
+    make_zip_from_data(url)
 
+    """
     response = {
         "statusCode": 200,
         "headers": headers_plain_text,
+        "body": base64.b64encode(zip_data).decode("utf-8"),
+        "isBase64Encoded": True,
+    }
+
+    return response
+    """
+    return {
+        "statusCode": 200,
+        "headers": headers_plain_text,
+        "body": "OK",
+    }
+
+def Make_zip222(event, context):
+    headers_plain_text={
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        #"X-Amz-Invocation-Type": 'Event'
+    }
+    return {
+        "statusCode": 200,
+        "headers": headers_plain_text,
+        "body": "OK"
+    }
+    
+
+import urllib
+import botocore
+
+def Download_zip(event, context):
+    print('event:', json.dumps(event))
+    headers_plain_text={
+        "Content-Type": "text/plain",
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }
+    headers_zip={
+        "Content-Type": "application/zip",
+        "Access-Control-Allow-Headers" : "Content-Type",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+    }
+    if event.get('queryStringParameters') is None:
+        return {
+                    "statusCode": 501,
+                    "headers": headers_plain_text,
+                    "body": "event.get('queryStringParameters') is None.",
+                }
+    try:
+        dir_name=event.get('queryStringParameters').get('dir_name')
+        if dir_name is None:
+            return {
+                        "statusCode": 501,
+                        "headers": headers_plain_text,
+                        "body": "dir_name is None.",
+                    }
+    except AttributeError:
+            return {
+                        "statusCode": 501,
+                        "headers": headers_plain_text,
+                        "body": "dir_name is None.",
+                    }
+
+    try:
+        zip_data=download_zip_from_data((dir_name))
+    except botocore.exceptions.ClientError:
+            return {
+                        "statusCode": 202,
+                        "headers": headers_plain_text,
+                        "body": "wait",
+                    }
+
+    response = {
+        "statusCode": 200,
+        "headers": headers_zip,
         "body": base64.b64encode(zip_data).decode("utf-8"),
         "isBase64Encoded": True,
     }
@@ -73,14 +154,18 @@ def get_title_from_data(target_url):
     soup = BeautifulSoup(r.text, "html.parser")
     return soup.select_one('#workTitle').text
 
+import boto3
 
-def get_zip_from_data(target_url):
+def make_zip_from_data(target_url):
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kakuyomu-downloader-bucket')
     r = requests.get(target_url)  
     soup = BeautifulSoup(r.text, "html.parser")
-
+    print(r.text)
 
     dir_name=soup.select_one('#workTitle').text
     print(dir_name)
+    dir_name_hash=dir_name
     """
     try:
         os.mkdir("./{0}".format(dir_name))
@@ -109,9 +194,30 @@ def get_zip_from_data(target_url):
                 with open("{0}/{1}.txt".format(dir_name,title),"w",encoding="utf-8") as f:
                     f.write(title+"\n\n"+txt)
                 """
-                new_zip.writestr("{0}/{1}.txt".format(dir_name,title), title+"\n\n"+txt)
+                new_zip.writestr("{0}/{1}.txt".format(dir_name_hash,title), title+"\n\n"+txt)
     #print(zip_stream.getvalue())
-    return zip_stream.getvalue(),dir_name
+    #return zip_stream.getvalue(),dir_name
+
+    print(dir_name_hash)
+
+    with open("/tmp/{0}.zip".format(dir_name_hash),"wb") as f:
+        f.write(zip_stream.getvalue())
+    bucket.upload_file( "/tmp/{0}.zip".format(dir_name_hash), "{0}.zip".format(dir_name_hash))
+
+def download_zip_from_data(dir_name):
+    print(dir_name)
+
+    dir_name_hash=dir_name
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket('kakuyomu-downloader-bucket')
+    bucket.download_file("{0}.zip".format(dir_name_hash), "/tmp/{0}.zip".format(dir_name_hash))
+
+    s3client = boto3.client('s3')
+
+    s3client.delete_object(Bucket="kakuyomu-downloader-bucket", Key="{0}.zip".format(dir_name_hash))
+
+    with open("/tmp/{0}.zip".format(dir_name_hash),"rb") as f:
+        return f.read()
 
 """
 A,dir_name=Get_zip('https://kakuyomu.jp/works/16816700426335359442')

@@ -1,37 +1,82 @@
 service: kakuyomu-downloader-api
 configValidationMode: error
+
 provider:
   name: aws
   runtime: python3.9  	
+  region: ap-northeast-1
   apiGateway:
     binaryMediaTypes:
-      - '*/*'
+      - '*/*'	
+  deploymentBucket:
+    name: kakuyomu-downloader-deployment-bucket-tokyo
+    serverSideEncryption: AES256
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "S3:*"
+          Resource:
+            - "*"
+	
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: kakuyomu-downloader-bucket
+
 functions:
   kakuyomu-downloader:
     handler: main.Make_zip
-    timeout: 1000
+    timeout: 900
+    memorySize: 1024
     events:
       - http:
-          path: /make
-          method: get
+          path: make
+          method: get	
           cors: true
+          async: true
           response:
-            headers:
-              Content-Type: "'application/zip'"
-          integration: lambda_proxy 
+            statusCodes:
+              202:
+                pattern: ''
+            #headers:
+              #Content-Type: "'application/json'"
+              #Access-Control-Allow-Headers : "Content-Type"
+              #Access-Control-Allow-Origin: "*"
+              #Access-Control-Allow-Methods: "OPTIONS,POST,GET"
+          integration: lambda_proxy
   kakuyomu-downloader-title:
     handler: main.Get_title
     timeout: 50
+    memorySize: 128
     events:
       - http:
-          path: /title
+          path: title
           method: get
           cors: true
           response:
             headers:
               Content-Type: "'text/plain'"
           integration: lambda_proxy 
+  kakuyomu-downloader-download:
+    handler: main.Download_zip
+    timeout: 50
+    memorySize: 128
+    events:
+      - http:
+          path: download
+          method: get
+          cors: true
+          response:
+            headers:
+              Content-Type: "'text/plain'"
+          integration: lambda_proxy 
+
 plugins:
   - serverless-python-requirements
   - serverless-offline
-  - serverless-ignore
+  - serverless-ignore	
+  - serverless-deployment-bucket
