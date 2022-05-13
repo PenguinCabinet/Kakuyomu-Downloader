@@ -12,8 +12,9 @@ def Get_title(event, context):
     headers_plain_text={
         "Content-Type": "text/plain",
         "Access-Control-Allow-Headers" : "Content-Type",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Origin": "https://kd.penguincabinet.com",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        #"Vary": "Origin"
     }
     if event.get('queryStringParameters') is None:
         return {
@@ -35,9 +36,10 @@ def Make_zip(event, context):
     headers_plain_text={
         "Content-Type": "text/plain",
         "Access-Control-Allow-Headers" : "Content-Type",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": "https://kd.penguincabinet.com",
         "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-        "X-Amz-Invocation-Type": 'Event'
+        "X-Amz-Invocation-Type": 'Event',
+        #"Vary": "Origin"
     }
     if event.get('queryStringParameters') is None:
         return {
@@ -82,8 +84,9 @@ def Make_zip222(event, context):
     headers_plain_text={
         "Content-Type": "text/plain",
         "Access-Control-Allow-Headers" : "Content-Type",
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": "https://kd.penguincabinet.com",
         "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        #"Vary": "Origin"
         #"X-Amz-Invocation-Type": 'Event'
     }
     return {
@@ -101,14 +104,16 @@ def Download_zip(event, context):
     headers_plain_text={
         "Content-Type": "text/plain",
         "Access-Control-Allow-Headers" : "Content-Type",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Origin": "https://kd.penguincabinet.com",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        #"Vary": "Origin"
     }
     headers_zip={
         "Content-Type": "application/zip",
         "Access-Control-Allow-Headers" : "Content-Type",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET"
+        "Access-Control-Allow-Origin": "https://kd.penguincabinet.com",
+        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        #"Vary": "Origin"
     }
     if event.get('queryStringParameters') is None:
         return {
